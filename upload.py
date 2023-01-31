@@ -26,14 +26,14 @@ def get_collection(old):
 
 def delete_model(id, model):
     return requests.delete(
-        f"http://localhost:3000/api/{model}/{id}",
+        f"{BASE}/api/{model}/{id}",
         headers=headers(),
     ).json()
 
 
 def clear_collection(id):
     items = requests.get(
-        f"http://localhost:3000/api/collection/{id}/items",
+        f"{BASE}/api/collection/{id}/items",
         headers=headers(),
     ).json()
 
@@ -47,7 +47,7 @@ def clear_collection(id):
 def update_collection(id, c):
     clear_collection(id)
     out = requests.put(
-        f"http://localhost:3000/api/collection/{id}",
+        f"{BASE}/api/collection/{id}",
         headers=headers(),
         json=c,
     ).json()
@@ -56,19 +56,19 @@ def update_collection(id, c):
 
 def create_card(c):
     out = requests.post(
-        f"http://localhost:3000/api/card/", headers=headers(), json=c
+        f"{BASE}/api/card/", headers=headers(), json=c
     ).json()
     return out["id"]
 
 
 def create_dashboard(c, cache):
     id = requests.post(
-        f"http://localhost:3000/api/dashboard/", headers=headers(), json=c
+        f"{BASE}/api/dashboard/", headers=headers(), json=c
     ).json()["id"]
     for card in c["ordered_cards"]:
         card["cardId"] = cache["card__" + str(card["card_id"])]
         out = requests.post(
-            f"http://localhost:3000/api/dashboard/{id}/cards",
+            f"{BASE}/api/dashboard/{id}/cards",
             headers=headers(),
             json=card,
         ).text
@@ -103,6 +103,7 @@ def map_table(src_dbs, dst_dbs, db, table):
 
 
 def process_and_upload_card(c, src_dbs, dst_dbs, cards, cache={}):
+    print(c['id'])
     if f"card__{c['id']}" in cache:
         return
 
@@ -147,5 +148,7 @@ if __name__ == "__main__":
         process_and_upload_card(c, src_dbs, dbs, cards, cache)
 
     for c in dashboards:
+        for card in c['ordered_cards']:
+            process_and_upload_card(card['card'], src_dbs, dbs, cards, cache)
         c["collection_id"] = id
         create_dashboard(c, cache)
